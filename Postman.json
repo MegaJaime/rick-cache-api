@@ -1,58 +1,64 @@
 {
-    "info": {
-        "name": "Rick and Morty API",
-        "description": "Postman collection for interacting with the Rick and Morty API.",
-        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-    },
-    "item": [
-        {
-            "name": "GraphQL Query",
-            "request": {
-                "method": "POST",
-                "header": [
-                    {
-                        "key": "Content-Type",
-                        "value": "application/json",
-                        "type": "text"
-                    }
-                ],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n  \"query\": \"query { characters(status: \\\"Alive\\\", species: \\\"Human\\\") { id name status species gender origin { name } } }\"\n}"
-                },
-                "url": {
-                    "raw": "http://localhost:4000/graphql",
-                    "protocol": "http",
-                    "host": [
-                        "localhost"
-                    ],
-                    "port": "4000",
-                    "path": [
-                        "graphql"
-                    ]
-                }
-            },
-            "response": []
+  "info": {
+    "name": "Rick and Morty API",
+    "description": "Postman collection for the Rick and Morty GraphQL API. Local npm start uses port 4000. Docker Compose uses port 8080.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GraphQL Query",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"query { characters(status: \\\"Alive\\\", species: \\\"Human\\\", name: \\\"Rick\\\") { id name status species gender origin } }\"\n}"
         },
-        {
-            "name": "Run Cron Job",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "url": {
-                    "raw": "http://localhost:4000/cronjob/run",
-                    "protocol": "http",
-                    "host": [
-                        "localhost"
-                    ],
-                    "port": "4000",
-                    "path": [
-                        "cronjob",
-                        "run"
-                    ]
-                }
-            },
-            "response": []
+        "url": {
+          "raw": "http://localhost:4000/graphql",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "4000",
+          "path": ["graphql"]
         }
-    ]
+      },
+      "response": []
+    },
+    {
+      "name": "Run Cron Job",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:4000/cronjob/run",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "4000",
+          "path": ["cronjob", "run"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:4000/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "4000",
+          "path": ["health"]
+        }
+      },
+      "response": []
+    }
+  ]
 }

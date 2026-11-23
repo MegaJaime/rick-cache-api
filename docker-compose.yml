@@ -1,5 +1,4 @@
 services:
-
   rick-cache-api:
     build:
       context: .
@@ -9,19 +8,26 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASSWORD=admin
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: admin
+      DB_USER: root
+      DB_PASSWORD: admin
+      DB_DIALECT: mysql
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 8080
+      CACHE_EXPIRATION: 3600
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - rick-cache-api
+
   db:
-    image: mysql:8.0.20
+    image: mysql:8.0
     container_name: database
     restart: always
     ports:
@@ -29,9 +35,15 @@ services:
     environment:
       MYSQL_DATABASE: admin
       MYSQL_ROOT_PASSWORD: admin
-      MYSQL_ROOT_HOST: '%'
+      MYSQL_ROOT_HOST: "%"
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-padmin", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
     networks:
       - rick-cache-api
 
@@ -40,9 +52,13 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     networks:
       - rick-cache-api
-
 
 volumes:
   mysql-data:

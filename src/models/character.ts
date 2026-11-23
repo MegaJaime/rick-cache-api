@@ -1,13 +1,22 @@
-import { Model, DataTypes } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 import { sequelize } from '../config/database';
 
-export class Character extends Model {
-  public id!: number;
-  public name!: string;
-  public status!: string;
-  public species!: string;
-  public gender!: string;
-  public origin!: string;
+export interface CharacterAttributes {
+  id: number;
+  name: string;
+  status: string;
+  species: string;
+  gender: string;
+  origin: string;
+}
+
+export class Character extends Model<CharacterAttributes, CharacterAttributes> implements CharacterAttributes {
+  declare id: number;
+  declare name: string;
+  declare status: string;
+  declare species: string;
+  declare gender: string;
+  declare origin: string;
 }
 
 Character.init(
@@ -15,26 +24,26 @@ Character.init(
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: false,
     },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     status: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(50),
       allowNull: false,
     },
     species: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: false,
     },
     gender: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(50),
       allowNull: false,
     },
     origin: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
   },
@@ -42,5 +51,7 @@ Character.init(
     sequelize,
     tableName: 'characters',
     timestamps: false,
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci',
   }
 );

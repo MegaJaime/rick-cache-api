@@ -1,83 +1,94 @@
 # Rick and Morty API
 
-This project is an API that allows users to search for characters from the popular animated series "Rick and Morty". It utilizes GraphQL for querying character data and implements caching with Redis to enhance performance. The character information is stored in a relational database using Sequelize ORM.
+GraphQL API to search Rick and Morty characters. Results are cached in Redis. Character data is stored in MySQL with Sequelize and loaded from the public Rick and Morty API.
 
 ## Features
 
-- Search for Rick and Morty characters by:
-  - Status
-  - Species
-  - Gender
-  - Name
-  - Origin
-- Caching of search results using Redis
-- Initial population of the database with 15 characters from the Rick and Morty API
-- Middleware for logging request information
-- Optional cron job for updating character data every 12 hours
-- Optional method decorator for logging query execution time
-- Optional unit tests for character search queries
-- Optional TypeScript implementation
+- Search characters by status, species, gender, name, and origin
+- Redis cache for search results
+- Database created and filled automatically the first time the server starts
+- Request logging middleware
+- Cron job that refreshes character data every 12 hours
+- Manual refresh: `POST /cronjob/run`
 
-## Getting Started
+## Prerequisites
 
-### Prerequisites
+- Node.js 18 or newer
+- npm
+- MySQL 8 and Redis, or Docker
 
-- Node.js (version 14 or higher)
-- npm (Node package manager)
-- A relational database (MySQL or PostgreSQL)
-- Redis
+## Run with Docker
 
-### Installation
+```bash
+docker compose up --build
+```
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/igorariza/rick-cache-api.git
-   cd rick-cache-api
-   ```
-2. Docker compose (Recommended):
-   If you want to run the database and Redis using Docker, you can use the provided `docker-compose.yml` file. Make sure you have Docker installed.
+The API listens on `http://localhost:8080`.
 
-   To start the services, run:
-   ```
-   docker-compose up -d
-   ```
+- GraphQL: `http://localhost:8080/graphql`
+- Health: `http://localhost:8080/health`
+- Refresh data: `POST http://localhost:8080/cronjob/run`
 
-3. Install the dependencies: (Local)
-   ```
-   npm install
-   ```
+## Run locally
 
-3. Set up your environment variables in the `.env` file:
-   ```
-   DATABASE_URL=mysql://root:admin@127.0.0.1:3306/admin
-   DB_NAME=admin
-   DB_USER=root
-   DB_PASSWORD=admin
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_DRIVER=mysql
-   DB_DIALECT=mysql
-   REDIS_URL=redis://localhost:6379
-   PORT=4000
-   CACHE_EXPIRATION=3600
-   ```
+1. Start MySQL and Redis (the Compose file can start only those two services).
+2. Install dependencies:
 
-5. Start the server:
-   ```
-   npm start
-   ```
+```bash
+npm install
+```
 
-### Usage
+3. Copy the environment file and adjust it if your database credentials differ:
 
-Once the server is running, you can access the GraphQL endpoint at POST `http://localhost:4000/cronjob/run`. You can use tools like Postman or GraphQL Playground to interact with the API.
+```bash
+cp .env.example .env
+```
 
-### Example Postman Request
+4. Start the server:
 
-You can import the provided Postman collection to test the API endpoints. The collection is located in the `Postman.json` file. To import it:
-   ./Postman.json
+```bash
+npm start
+```
+
+Local default: `http://localhost:4000/graphql`.
+
+On startup the server creates the `characters` table when it does not exist and imports characters when the table is empty.
+
+## Example query
+
+```graphql
+query {
+  characters(status: "Alive", species: "Human", name: "Rick") {
+    id
+    name
+    status
+    species
+    gender
+    origin
+  }
+}
+```
+
+`origin` is a string (the origin name), for example `Earth (C-137)`.
+
+You can import `Postman.json` to try the same requests.
+
+## Environment
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `DB_NAME` | `admin` | MySQL database |
+| `DB_USER` | `root` | MySQL user |
+| `DB_PASSWORD` | `admin` | MySQL password |
+| `DB_HOST` | `127.0.0.1` | MySQL host (`db` inside Compose) |
+| `DB_PORT` | `3306` | MySQL port |
+| `DB_DIALECT` | `mysql` | Sequelize dialect |
+| `REDIS_URL` | | Redis connection string. Used when set |
+| `REDIS_HOST` | `127.0.0.1` | Redis host when `REDIS_URL` is empty |
+| `REDIS_PORT` | `6379` | Redis port |
+| `PORT` | `4000` | HTTP port (`8080` in Docker) |
+| `CACHE_EXPIRATION` | `3600` | Cache TTL in seconds |
 
 ## License
 
-
-
-This project is licensed under the MIT License. See the LICENSE file for details.
+MIT

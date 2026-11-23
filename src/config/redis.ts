@@ -1,27 +1,41 @@
 import Redis from 'ioredis';
+import dotenv from 'dotenv';
 
-const redisClient = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: Number(process.env.REDIS_PORT) || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
-  retryStrategy: (times) => {
-    console.error(`Retrying Redis connection (${times})...`);
-    return Math.min(times * 100, 3000); // Retry with a maximum of 3 seconds
-  },
+dotenv.config();
+
+const retryStrategy = (times: number) => {
+  if (times > 20) {
+    return null;
+  }
+  return Math.min(times * 200, 3000);
+};
+
+const redisClient = process.env.REDIS_URL
+  ? new Redis(process.env.REDIS_URL, {
+      lazyConnect: true,
+      maxRetriesPerRequest: 2,
+      retryStrategy,
+    })
+  : new Redis({
+      host: process.env.REDIS_HOST || '127.0.0.1',
+      port: Number(process.env.REDIS_PORT) || 6379,
+      password: process.env.REDIS_PASSWORD || undefined,
+      lazyConnect: true,
+      maxRetriesPerRequest: 2,
+      retryStrategy,
+    });
+
+redisClient.on('error', (err: Error) => {
+  console.error('Redis error:', err.message);
 });
 
-const initializeRedis = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    redisClient.on('connect', () => {
-      console.log('Connected to Redis');
-      resolve();
-    });
+const initializeRedis = async (): Promise<void> => {
+  if (redisClient.status === 'ready') {
+    return;
+  }
 
-    redisClient.on('error', (err) => {
-      console.error('Redis error:', err);
-      reject(err);
-    });
-  });
+  await redisClient.connect();
+  console.log('Connected to Redis');
 };
 
 export { redisClient, initializeRedis };

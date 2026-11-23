@@ -1,7 +1,6 @@
-import app from './app';
+import { startServer } from './app';
 
-const PORT = process.env.PORT || 4000;
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+startServer().catch((error) => {
+  console.error('Error during app initialization:', error);
+  process.exit(1);
 });
