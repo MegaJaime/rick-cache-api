@@ -45,18 +45,25 @@ spec:
             value: "6379"
           - name: PORT
             value: "8080"
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 12
+          timeoutSeconds: 2
         livenessProbe:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 5
           periodSeconds: 10
+          timeoutSeconds: 2
         readinessProbe:
           httpGet:
-            path: /health
+            path: /ready
             port: 8080
-          initialDelaySeconds: 3
           periodSeconds: 5
+          timeoutSeconds: 2
         resources:
           requests:
             cpu: "100m"

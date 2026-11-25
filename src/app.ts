@@ -27,8 +27,18 @@ app.get('/', (_req: Request, res: Response) => {
   });
 });
 
+let ready = false;
+
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok' });
+});
+
+app.get('/ready', (_req: Request, res: Response) => {
+  if (!ready) {
+    res.status(503).json({ status: 'starting' });
+    return;
+  }
+  res.json({ status: 'ready' });
 });
 
 app.post('/cronjob/run', async (_req: Request, res: Response) => {
@@ -41,26 +51,19 @@ app.post('/cronjob/run', async (_req: Request, res: Response) => {
   }
 });
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const startServer = async () => {
-  await connectDatabase();
-  await sequelize.sync();
-  console.log('Database schema is ready');
+  const port = Number(process.env.PORT) || 4000;
+  await new Promise<void>((resolve, reject) => {
+    httpServer.once('error', reject);
+    httpServer.listen(port, '0.0.0.0', () => {
+      httpServer.off('error', reject);
+      resolve();
+    });
+  });
 
-  const count = await Character.count();
-  if (count === 0) {
-    try {
-      const imported = await characterService.syncFromApi();
-      console.log(`Imported ${imported} characters from the Rick and Morty API`);
-    } catch (error) {
-      console.error(
-        'Initial character import failed. The server will start with an empty table. POST /cronjob/run to retry.',
-        error
-      );
-    }
-  }
-
-  await initializeRedis();
-  startCronJob();
+  console.log(`Server is running on http://0.0.0.0:${port}`);
 
   const server = new ApolloServer({
     typeDefs,
@@ -73,13 +76,35 @@ export const startServer = async () => {
   await server.start();
   app.use('/graphql', cors(), express.json(), expressMiddleware(server));
 
-  const port = Number(process.env.PORT) || 4000;
-  await new Promise<void>((resolve) => {
-    httpServer.listen(port, resolve);
-  });
+  for (;;) {
+    try {
+      await connectDatabase();
+      await sequelize.sync();
+      console.log('Database schema is ready');
 
-  console.log(`Server is running on http://localhost:${port}`);
-  console.log(`GraphQL ready at http://localhost:${port}/graphql`);
+      const count = await Character.count();
+      if (count === 0) {
+        try {
+          const imported = await characterService.syncFromApi();
+          console.log(`Imported ${imported} characters from the Rick and Morty API`);
+        } catch (error) {
+          console.error(
+            'Initial character import failed. The server will start with an empty table. POST /cronjob/run to retry.',
+            error
+          );
+        }
+      }
+
+      await initializeRedis();
+      startCronJob();
+      ready = true;
+      console.log(`GraphQL ready at http://0.0.0.0:${port}/graphql`);
+      return;
+    } catch (error) {
+      console.error('Dependencies are not ready. Retrying in 5s.', error);
+      await sleep(5000);
+    }
+  }
 };
 
 export default app;
